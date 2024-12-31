@@ -2,7 +2,7 @@ from tortoise import fields
 from tortoise.validators import RegexValidator
 import re   
 
-from src.app.core.config.model.base_model import BaseModel
+from src.base.model import BaseModel
 
 
 class UserModel(BaseModel):
