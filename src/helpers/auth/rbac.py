@@ -1,8 +1,8 @@
 from functools import wraps
 from fastapi import HTTPException, status
 
-from src.app.features.user.auth.service.auth_service_imp import AuthServiceImp
-from src.app.core.exception.auth_exceptions import AccessDenied
+from src.helpers.auth.controller import AuthController
+from src.helpers.exceptions.auth_exceptions import AccessDenied
 
 def role_required(required_role: str):
     def decorator(func):
@@ -12,7 +12,7 @@ def role_required(required_role: str):
             if not token:
                 raise AccessDenied('Not authenticated')
 
-            auth_service = AuthServiceImp()
+            auth_service = AuthController()
             
             try:
                 user_role = await auth_service.get_role_from_token(token)

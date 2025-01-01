@@ -32,6 +32,8 @@ class ResponceModel(MessageModel):
         enum_type=ResponceStatus, default=ResponceStatus.NONE.value
     )
 
+    prompts = fields.ReverseRelation["PromptModel"]
+
     class Meta:
         table = "responces"
         indexes = [("prompt",)]

@@ -1,6 +1,7 @@
 from tortoise import fields
 
 from src.base.model import BaseModel
+from src.app.chat.model import ChatModel  # noqa: F401
 
 
 class ProjectModel(BaseModel):
@@ -10,6 +11,8 @@ class ProjectModel(BaseModel):
 
     name = fields.CharField(max_length=50)
     description = fields.CharField(max_length=100)
+
+    chats = fields.ReverseRelation["ChatModel"]
 
     class Meta:
         table = "projects"
