@@ -13,9 +13,8 @@ async def create_user(username: str, email: str, password: str) -> UserModel:
     if not email:
         raise BaseError("Email should not be blank!")
 
-    try:
-        await UserModel.get(email=email)
-    except DoesNotExist:
+    existing_user = await UserModel.filter(email=email).first()
+    if existing_user:
         raise BaseError("Email is already in use")
 
     return await UserModel.create_user(
@@ -36,8 +35,10 @@ async def get_user_by_id(user_id: int) -> UserModel:
     except DoesNotExist:
         raise BaseError("User not found")
 
+
 async def get_users() -> Sequence[UserModel]:
     pass
+
 
 async def update_user(user_id: int, data: dict) -> UserModel:
     user = await get_user_by_id(user_id)

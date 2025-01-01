@@ -7,7 +7,7 @@ from .schema import TokenDisplay, AccessTokenDisplay
 from .rbac import role_required
 from .dependencies import get_auth_controller, get_auth_usecase
 
-from src.app.user.schema import User_Pydantic
+from src.app.user.schema import UserPydantic
 from src.helpers.exceptions.auth_exceptions import InvalidCredentialsError
 from src.helpers.exceptions.auth_exceptions import BaseError
 from src.helpers.enum.user_role import UserRole
@@ -53,7 +53,7 @@ async def refresh_access_token(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@router.get("/read/users/me", response_model=User_Pydantic)
+@router.get("/read/users/me", response_model=UserPydantic)
 async def read_users_me(
     token: str = Depends(oauth2_scheme),
     auth_usecase: AuthUseCase = Depends(get_auth_usecase),
