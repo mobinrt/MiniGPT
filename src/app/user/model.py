@@ -21,7 +21,9 @@ class UserModel(BaseModel):
         ],
         error_messages={"invalid": "Your email is invalid."},
     )
-
+    active_project = fields.ForeignKeyField(
+        "models.ProjectModel", null=True, on_delete=fields.SET_NULL
+    )
     password_hash = fields.CharField(max_length=200)
     is_admin = fields.BooleanField(default=False)
     is_premium = fields.BooleanField(default=False)

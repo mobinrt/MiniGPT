@@ -45,5 +45,6 @@ class AuthUseCase:
 
     async def refresh_access_token(self, token: str) -> AccessTokenDisplay:
         role = await self.auth_service.get_role_from_token(token)
-        new_access_token = await self.auth_service.create_access_token(token, role)
+        user_id = await self.auth_service.get_user_id_by_token(token)
+        new_access_token = await self.auth_service.create_access_token(user_id, role)
         return AccessTokenDisplay(access_token=new_access_token, token_type="bearer")

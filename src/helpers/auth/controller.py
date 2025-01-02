@@ -1,12 +1,12 @@
 from datetime import timedelta, datetime
 from jose import JWTError, jwt
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 
 from src.app.user.model import UserModel
 from src.config import settings
 from src.helpers.enum.user_role import UserRole
 from src.helpers.exceptions.base_exception import BaseError
-from src.helpers.exceptions.auth_exceptions import InvalidTokenError, AccessDenied
+from src.helpers.exceptions.auth_exceptions import InvalidTokenError
 from src.helpers.exceptions.entities import NotFoundError
 from . import oauth2_scheme
 
@@ -21,13 +21,21 @@ class AuthController:
     async def get_user_by_email(self, email: str) -> UserModel | None:
         return await UserModel.get_or_none(email=email)
 
+    async def get_user_by_id(self, id: int) -> UserModel | None:
+        return await UserModel.get_or_none(id=id)
+
     async def create_access_token(self, user_id: int, role: UserRole) -> str:
         expires_delta = timedelta(minutes=self.access_token_expire_minutes)
-        to_encode = {
+        user = await self.get_user_by_id(user_id)
+        data = {
             "sub": str(user_id),
             "role": role.value,
+            "active_project_id": user.active_project.id
+            if user.active_project
+            else None,
             "exp": datetime.now() + expires_delta,
         }
+        to_encode = data.copy()
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
     async def create_refresh_token(self, user_id: int) -> str:
@@ -61,12 +69,16 @@ class AuthController:
         except JWTError:
             raise InvalidTokenError()
 
-    def admin_required(self, user: UserModel = Depends(get_current_user)):
-        if not user.is_admin:
-            raise AccessDenied()
-
-    def role_required(
-        self, required_role: UserRole, user: UserModel = Depends(get_current_user)
-    ):
-        if not user.is_admin and required_role != UserRole.MEMBER:
-            raise AccessDenied()
+    async def get_user_id_by_token(self, token) -> UserModel:
+        try:
+            payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+            user_id = payload.get("sub")
+            if user_id is None:
+                raise InvalidTokenError()
+            return user_id
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Token has expired."
+            )
+        except jwt.JWTError:
+            raise InvalidTokenError()

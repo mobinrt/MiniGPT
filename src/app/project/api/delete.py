@@ -26,7 +26,7 @@ async def delete_project_me(
         if not current_user.__eq__(project.owner):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can not delete this project.",
+                detail="Unauthorized to delete this project.",
             )
         await controller.delete(id)
         return {"message": "Your project has been deleted successfully"}

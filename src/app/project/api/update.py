@@ -26,7 +26,7 @@ async def update_project(
         if not current_user.__eq__(project.owner):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="You can not delete this project.",
+                detail="Unauthorized to access this project",
             )
 
         dict_data = data.model_dump()
