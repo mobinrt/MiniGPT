@@ -7,7 +7,8 @@ from src.app.user.model import UserModel
 from src.config import settings
 from src.helpers.enum.user_role import UserRole
 from src.helpers.exceptions.base_exception import BaseError
-
+from src.helpers.exceptions.auth_exceptions import InvalidTokenError, AccessDenied
+from src.helpers.exceptions.user import UserNotFoundError
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -40,15 +41,14 @@ class AuthController:
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
             user_id: str = payload.get("sub")
-            print("user_id: ", user_id)
             if user_id is None:
-                raise BaseError("Invalid token")
+                raise InvalidTokenError()
         except JWTError:
-            raise BaseError("Could not validate token")
+            raise InvalidTokenError()
 
         user = await UserModel.get_or_none(id=user_id)
         if not user:
-            raise BaseError("User not found")
+            raise UserNotFoundError("User not found")
         return user
 
     async def get_role_from_token(
@@ -61,14 +61,14 @@ class AuthController:
                 raise BaseError("Role not found in token")
             return UserRole(role)
         except JWTError:
-            raise BaseError("Could not validate token")
+            raise InvalidTokenError()
 
     def admin_required(self, user: UserModel = Depends(get_current_user)):
         if not user.is_admin:
-            raise BaseError("Admin access required")
+            raise AccessDenied()
 
     def role_required(
         self, required_role: UserRole, user: UserModel = Depends(get_current_user)
     ):
         if not user.is_admin and required_role != UserRole.MEMBER:
-            raise BaseError("Role not sufficient for this action")
+            raise AccessDenied()

@@ -4,6 +4,7 @@ from typing import Sequence
 from src.app.user.model import UserModel
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.hash import get_password_hash
+from src.helpers.exceptions.user import DeleteAdmin
 
 
 async def create_user(username: str, email: str, password: str) -> UserModel:
@@ -37,7 +38,10 @@ async def get_user_by_id(user_id: int) -> UserModel:
 
 
 async def get_users() -> Sequence[UserModel]:
-    pass
+    try:
+        return await UserModel.all()
+    except DoesNotExist:
+        raise BaseError("Not found any user")
 
 
 async def update_user(user_id: int, data: dict) -> UserModel:
@@ -52,4 +56,6 @@ async def update_user(user_id: int, data: dict) -> UserModel:
 
 async def delete_user(user_id: int):
     user = await get_user_by_id(user_id)
+    if user.is_admin:
+        raise DeleteAdmin()
     await user.delete()

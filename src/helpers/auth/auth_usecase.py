@@ -7,7 +7,7 @@ from src.helpers.exceptions.auth_exceptions import InvalidCredentialsError
 from src.helpers.auth.schema import TokenDisplay, AccessTokenDisplay
 from src.helpers.hash import verify_password
 from src.helpers.enum.user_role import UserRole
-from src.app.user.schema import UserPydantic
+from src.app.user.schema import UserDisplay
 
 
 class AuthUseCase:
@@ -41,7 +41,7 @@ class AuthUseCase:
 
     async def get_current_user(self, token: str):
         user = await self.auth_service.get_current_user(token)
-        return await UserPydantic.from_tortoise_orm(user)
+        return UserDisplay.model_validate(user)
 
     async def refresh_access_token(self, token: str) -> AccessTokenDisplay:
         role = await self.auth_service.get_role_from_token(token)
