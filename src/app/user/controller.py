@@ -4,7 +4,7 @@ from typing import Sequence
 from src.app.user.model import UserModel
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.hash import get_password_hash
-from src.helpers.exceptions.user import DeleteAdmin
+from src.helpers.exceptions.entities import DeleteAdmin
 
 
 async def create_user(username: str, email: str, password: str) -> UserModel:
@@ -46,18 +46,21 @@ async def get_users() -> Sequence[UserModel]:
 
 async def update_user(user_id: int, data: dict) -> UserModel:
     temp_pass = data.get("password")
-    if temp_pass is not None: 
+    if temp_pass is not None and temp_pass != "":
         if len(temp_pass) < 8 or len(temp_pass) > 16:
-            raise BaseError("Password should have at least 8 characters and less than 16")
-    
-    user = await get_user_by_id(user_id)
+            raise BaseError(
+                "Password should have at least 8 characters and less than 16"
+            )
+
     hashed_password = get_password_hash(temp_pass)
-    data["password_hash"] = hashed_password  
+    data["password_hash"] = hashed_password
     del data["password"]
-    
+
+    user = await get_user_by_id(user_id)
+
     for field, value in data.items():
         setattr(user, field, value) if value else None
-        
+
     await user.save()
     return user
 

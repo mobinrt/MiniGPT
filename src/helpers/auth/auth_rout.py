@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from tortoise.exceptions import ValidationError
-
+from . import oauth2_scheme
 from .auth_usecase import AuthUseCase
-from .controller import AuthController, oauth2_scheme
+from .controller import AuthController
 from .schema import TokenDisplay, AccessTokenDisplay
 from .rbac import role_required
 from .dependencies import get_auth_controller, get_auth_usecase

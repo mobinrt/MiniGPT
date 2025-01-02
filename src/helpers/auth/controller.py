@@ -1,16 +1,14 @@
 from datetime import timedelta, datetime
 from jose import JWTError, jwt
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordBearer
 
 from src.app.user.model import UserModel
 from src.config import settings
 from src.helpers.enum.user_role import UserRole
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.exceptions.auth_exceptions import InvalidTokenError, AccessDenied
-from src.helpers.exceptions.user import UserNotFoundError
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+from src.helpers.exceptions.entities import NotFoundError
+from . import oauth2_scheme
 
 
 class AuthController:
@@ -48,7 +46,7 @@ class AuthController:
 
         user = await UserModel.get_or_none(id=user_id)
         if not user:
-            raise UserNotFoundError("User not found")
+            raise NotFoundError("User not found")
         return user
 
     async def get_role_from_token(

@@ -5,7 +5,7 @@ from . import router
 from src.app.user.schema import UserDisplay
 from src.app.user.controller import get_user_by_id, get_user_by_email, get_users
 from src.helpers.exceptions.base_exception import BaseError
-from src.helpers.auth.rbac import role_required, check_role
+from src.helpers.auth.rbac import role_required
 from src.helpers.enum.user_role import UserRole
 from src.helpers.auth.controller import oauth2_scheme
 
@@ -22,8 +22,6 @@ async def find_user_by_id(
     token: str = Depends(oauth2_scheme),
 ):
     try:
-        await check_role(UserRole.ADMIN.value, token)
-
         user = await get_user_by_id(id)
         return UserDisplay.model_validate(user)
     except BaseError as e:
@@ -44,8 +42,6 @@ async def find_user_by_email(
     token: str = Depends(oauth2_scheme),
 ):
     try:
-        await check_role(UserRole.ADMIN.value, token)
-
         user = await get_user_by_email(email)
         return UserDisplay.model_validate(user)
     except BaseError as e:
@@ -65,8 +61,6 @@ async def find_users(
     token: str = Depends(oauth2_scheme),
 ):
     try:
-        await check_role(UserRole.ADMIN.value, token)
-
         users = await get_users()
         return UserDisplay.model_validate(users)
     except BaseError as e:

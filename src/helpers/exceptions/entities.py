@@ -1,9 +1,9 @@
 from .base_exception import BaseError
 
 
-class UserNotFoundError(BaseError):
+class NotFoundError(BaseError):
     def __init__(self):
-        super().__init__("User not found")
+        super().__init__("Entity not found")
 
 
 class DeleteAdmin(BaseError):

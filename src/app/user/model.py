@@ -29,15 +29,6 @@ class UserModel(BaseModel):
 
     projects = fields.ReverseRelation["ProjectModel"]
 
-    class Meta:
-        table = "users"
-        indexes = [("email",)]
-
-    class PydanticMeta:
-        include = ("projects",)
-        exclude = ["is_admin", "password_hash"]
-        max_recursion = 2
-
     async def upgrade_premium(self):
         self.is_premium = True
         await self.save()
@@ -45,6 +36,11 @@ class UserModel(BaseModel):
     async def downgrade_premium(self):
         self.is_premium = True
         await self.save()
+
+    def __eq__(self, other):
+        if not isinstance(other, UserModel):
+            return NotImplemented
+        return self.id == other.id
 
     @classmethod
     async def create_user(cls, username: str, email: str, password: str) -> "UserModel":
@@ -60,3 +56,12 @@ class UserModel(BaseModel):
     @staticmethod
     def _hash_password(password: str) -> str:
         return get_password_hash(password)
+
+    class Meta:
+        table = "users"
+        indexes = [("email",)]
+
+    class PydanticMeta:
+        include = ("projects",)
+        exclude = ["is_admin", "password_hash"]
+        max_recursion = 2

@@ -30,13 +30,3 @@ def role_required(required_role: str):
         return wrapper
 
     return decorator
-
-
-async def check_role(role: str, token: str):
-    auth_service = AuthController()
-    user_role = await auth_service.get_role_from_token(token)
-    if user_role != role:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access forbidden: You do not have the required role",
-        )
