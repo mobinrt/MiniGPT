@@ -45,11 +45,19 @@ async def get_users() -> Sequence[UserModel]:
 
 
 async def update_user(user_id: int, data: dict) -> UserModel:
+    temp_pass = data.get("password")
+    if temp_pass is not None: 
+        if len(temp_pass) < 8 or len(temp_pass) > 16:
+            raise BaseError("Password should have at least 8 characters and less than 16")
+    
     user = await get_user_by_id(user_id)
+    hashed_password = get_password_hash(temp_pass)
+    data["password_hash"] = hashed_password  
+    del data["password"]
+    
     for field, value in data.items():
-        if field == "password":
-            value = get_password_hash(value)
-        setattr(user, field, value)
+        setattr(user, field, value) if value else None
+        
     await user.save()
     return user
 

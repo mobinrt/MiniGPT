@@ -16,7 +16,7 @@ from src.helpers.auth.dependencies import get_auth_controller
     status_code=status.HTTP_200_OK,
 )
 @role_required(UserRole.MEMBER.value)
-async def delete_user_self(
+async def update_user_self(
     data: UserUpdate,
     token: str = Depends(oauth2_scheme),
     auth_service: AuthController = Depends(get_auth_controller),
@@ -25,9 +25,10 @@ async def delete_user_self(
         await check_role(UserRole.MEMBER.value, token)
         user = await auth_service.get_current_user(token)
         
-        updated_user = await update_user(user.id, data)
+        dict_data = data.model_dump()
+        updated_user = await update_user(user.id, dict_data)
         return UserDisplay.model_validate(updated_user)
     except BaseError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
-    except Exception as _e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
+    # except Exception as _e:
+    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

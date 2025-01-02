@@ -1,6 +1,6 @@
 from tortoise.contrib.pydantic import pydantic_model_creator  # noqa: F401
 from tortoise.contrib.pydantic import pydantic_queryset_creator  # noqa: F401
-from pydantic import BaseModel, Field, model_validator, EmailStr, HttpUrl
+from pydantic import BaseModel, Field, model_validator, EmailStr, HttpUrl, field_validator
 from typing import Optional
 
 from src.app.user.model import UserModel  # noqa: F401
@@ -35,7 +35,12 @@ class UserUpdate(UserCreate):
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     confirm_password: Optional[str] = None
-
+    
+    @field_validator("email", mode="before")
+    def validate_email(cls, value):
+        if value == "":
+            return None
+        return value
 
 # UserDisplay = pydantic_model_creator(
 #     UserModel, name="UserCreate", exclude=["password_hash"]
