@@ -31,7 +31,7 @@ class UserDisplay(BaseModel):
 
 
 class UserUpdate(UserCreate):
-    username: Optional[str] = None
+    username: Optional[str] = Field(pattern=r"^[a-z]+$", max_length=15, default=None)
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     confirm_password: Optional[str] = None

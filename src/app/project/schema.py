@@ -3,23 +3,21 @@ from datetime import datetime
 from typing import Optional
 
 
-class ProjectBase(BaseModel):
+class ProjectCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=15)
     description: Optional[str] = Field(max_length=100, default=None)
 
 
-class ProjectCreate(ProjectBase):
-    pass
-
-
 class ProjectUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+    name: Optional[str] = Field(max_length=15, default=None)
+    description: Optional[str] = Field(max_length=100, default=None)
 
 
-class ProjectDisplay(ProjectBase):
+class ProjectDisplay(BaseModel):
     id: int
     owner_id: int
+    name: str
+    description: str
     created_at: datetime
     updated_at: datetime
 

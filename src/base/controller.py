@@ -32,7 +32,7 @@ class BaseController(Generic[TModel]):
     async def update(self, id: int, data: dict) -> TModel:
         instance = await self.get_by_id(id)
         for field, value in data.items():
-            setattr(instance, field, value)
+            setattr(instance, field, value) if value else None
         await instance.save()
         return instance
 

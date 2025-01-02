@@ -1,33 +1,40 @@
 from fastapi import HTTPException, status, Depends
 from . import router
 
-from src.app.user.schema import UserDisplay, UserUpdate
-from src.app.user.controller import update_user
+from src.app.project.schema import ProjectDisplay, ProjectUpdate
 from src.helpers.exceptions.base_exception import BaseError
-from src.helpers.auth.rbac import role_required
-from src.helpers.enum.user_role import UserRole
-from src.helpers.auth.controller import AuthController
-from src.helpers.auth.dependencies import get_auth_controller
-from src.helpers.auth import oauth2_scheme
+from src.helpers.auth.dependencies import get_current_user
+from src.app.user.model import UserModel
+from src.app.project.controller import ProjectController, get_project_controller
+from src.helpers.exceptions.entities import NotFoundError
+
 
 @router.put(
-    "/update/me",
-    response_model=UserDisplay,
+    "/update/{id}",
+    response_model=ProjectDisplay,
     status_code=status.HTTP_200_OK,
 )
-@role_required(UserRole.MEMBER.value)
-async def update_user_self(
-    data: UserUpdate,
-    token: str = Depends(oauth2_scheme),
-    auth_service: AuthController = Depends(get_auth_controller),
+async def update_project(
+    id: int,
+    data: ProjectUpdate,
+    controller: ProjectController = Depends(get_project_controller),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        
-        user = await auth_service.get_current_user(token)
-        
+        project = await controller.get_by_id(id)
+        print(project.name)
+        if not current_user.__eq__(project.owner):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can not delete this project.",
+            )
+
         dict_data = data.model_dump()
-        updated_user = await update_user(user.id, dict_data)
-        return UserDisplay.model_validate(updated_user)
+        updated_project = await controller.update(id, dict_data)
+        print(updated_project)
+        return ProjectDisplay.model_validate(updated_project)
+    except NotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
     # except Exception as _e:
