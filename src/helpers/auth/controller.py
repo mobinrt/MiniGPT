@@ -30,8 +30,8 @@ class AuthController:
         data = {
             "sub": str(user_id),
             "role": role.value,
-            "active_project_id": user.active_project.id
-            if user.active_project
+            "active_project_id": user.active_project_id
+            if user.active_project_id
             else None,
             "exp": datetime.now() + expires_delta,
         }

@@ -3,7 +3,6 @@ from tortoise.validators import RegexValidator
 import re
 
 from src.base.model import BaseModel
-from src.app.project.model import ProjectModel  # noqa: F401
 from src.helpers.hash import get_password_hash
 from src.helpers.exceptions.base_exception import BaseError
 
@@ -21,15 +20,12 @@ class UserModel(BaseModel):
         ],
         error_messages={"invalid": "Your email is invalid."},
     )
-    active_project = fields.ForeignKeyField(
-        "models.ProjectModel", null=True, on_delete=fields.SET_NULL
-    )
+    active_project_id = fields.IntField(null=True)
     password_hash = fields.CharField(max_length=200)
     is_admin = fields.BooleanField(default=False)
     is_premium = fields.BooleanField(default=False)
     pic_url = fields.CharField(max_length=255, null=True)
 
-    projects = fields.ReverseRelation["ProjectModel"]
 
     async def upgrade_premium(self):
         self.is_premium = True

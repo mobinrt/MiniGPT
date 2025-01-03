@@ -9,7 +9,7 @@ class ChatModel(BaseModel):
         "models.ProjectModel", related_name="chats", on_delete=fields.CASCADE
     )
 
-    title = fields.CharField(max_length=50)
+    title = fields.CharField(max_length=15)
     is_active = fields.BooleanField(default=False)
 
     messages = fields.ReverseRelation["MessageModel"]
