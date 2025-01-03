@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from tortoise.exceptions import ValidationError
+from fastapi.responses import JSONResponse
+
 from . import oauth2_scheme
 from .auth_usecase import AuthUseCase
 from .controller import AuthController
@@ -24,7 +26,10 @@ async def login_for_access_token(
     auth_usecase: AuthUseCase = Depends(get_auth_usecase),
 ):
     try:
-        return await auth_usecase.get_token(data)
+        token_data  =  await auth_usecase.get_token(data)
+        headers = {"Authorization": f"Bearer {token_data.access_token}"}
+        print(headers)
+        return JSONResponse(content=token_data.model_dump(), headers=headers)
     except InvalidCredentialsError:
         raise HTTPException(
             status_code=401,

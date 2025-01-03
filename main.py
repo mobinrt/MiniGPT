@@ -8,7 +8,6 @@ from src.app.user.api.routers import user_router
 from src.app.project.api.routers import project_router
 from src.app.chat.api.routers import chat_router
 from src.helpers.auth.auth_rout import router as auth_router
-from src.middleware.active_project import ActiveProjectMiddleware
 
 
 @app.exception_handler(AccessDenied)
@@ -24,7 +23,7 @@ def start():
     return "this is my Mini GPT project!!"
 
 
-app.add_middleware(ActiveProjectMiddleware)
+
 app.include_router(user_router)
 app.include_router(project_router)
 app.include_router(chat_router)
