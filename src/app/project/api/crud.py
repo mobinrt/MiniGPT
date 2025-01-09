@@ -10,8 +10,6 @@ from src.app.project.model import ProjectModel
 
 from src.helpers.exceptions.entities import NotFoundError
 from src.helpers.exceptions.base_exception import BaseError
-from src.helpers.auth.rbac import get_role
-from src.helpers.enum.user_role import UserRole
 from src.helpers.auth import oauth2_scheme
 from src.helpers.filter import Filter
 from src.helpers.pagination import Paginator, paginate_decorator
@@ -70,10 +68,9 @@ async def find_projects(
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        role = await get_role(token)
         query = OrderBy.create(query=ProjectModel.all(), sort_by=sort_by)
 
-        if role == UserRole.MEMBER.value:
+        if not current_user.is_admin:
             query = query.filter(owner=current_user)
 
         filterd_query = Filter.create(query=query, filters=filters)
@@ -103,16 +100,14 @@ async def find_projects(
 )
 async def find_project_by_id(
     id: int,
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
     controller: ProjectController = Depends(get_project_controller),
 ):
     try:
-        role = await get_role(token)
         project = await controller.get_by_id(id)
         project_owner = await project.owner
 
-        if current_user != project_owner and role != UserRole.ADMIN.value:
+        if current_user != project_owner and not current_user.is_admin:
             raise BaseError("Project not found")
 
         return ProjectDisplay.model_validate(project)
@@ -164,11 +159,10 @@ async def delete_project(
     controller: ProjectController = Depends(get_project_controller),
 ):
     try:
-        role = await get_role(token)
         project = await controller.get_by_id(id)
         project_owner = await project.owner
 
-        if current_user != project_owner and role != UserRole.ADMIN.value:
+        if current_user != project_owner and not current_user.is_admin:
             raise BaseError("Project not found")
 
         await controller.delete(project)

@@ -5,7 +5,7 @@ from typing import Optional
 
 class ChatCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=15)
-
+    project_id: int
 
 class ChatUpdate(BaseModel):
     title: Optional[str] = Field(max_length=15, default=None)

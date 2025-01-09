@@ -1,7 +1,6 @@
 from tortoise import fields
 
 from src.base.model import BaseModel
-from src.app.chat.message.model import MessageModel  # noqa: F401
 
 
 class ChatModel(BaseModel):
@@ -12,7 +11,6 @@ class ChatModel(BaseModel):
     title = fields.CharField(max_length=15)
     is_active = fields.BooleanField(default=False)
 
-    messages = fields.ReverseRelation["MessageModel"]
 
     class Meta:
         table = "chats"

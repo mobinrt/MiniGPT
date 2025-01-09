@@ -12,7 +12,7 @@ from src.app.user.controller import (
 )
 from src.app.user.model import UserModel
 
-from src.helpers.auth.rbac import role_required, validate_role
+from src.helpers.auth.rbac import role_required
 from src.helpers.auth.dependencies import get_current_user
 from src.helpers.auth.controller import oauth2_scheme
 from src.helpers.exceptions.base_exception import BaseError
@@ -151,11 +151,10 @@ async def delete(
 ):
     try:
         if id:
-            if await validate_role(token, UserRole.ADMIN.value):
+            if current_user.is_admin:
                 await delete_user(id)
                 return {"message": "User deleted successfully by admin"}
-
-        if await validate_role(token, UserRole.MEMBER.value):
+        else:
             await delete_user(user_id=current_user.id)
             return {"message": "Your account has been deleted successfully"}
 
