@@ -17,7 +17,7 @@ from src.helpers.auth.dependencies import get_current_user
 from src.helpers.auth.controller import oauth2_scheme
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.exceptions.entities import DeleteAdmin
- 
+
 # from src.helpers.schema import UserResponseScheme
 from src.helpers.filter import Filter
 from src.helpers.pagination import Paginator, paginate_decorator
@@ -109,6 +109,9 @@ async def find_users(
         )
 
         return await paginated_data.get_paginated_response(selected_data)
+    except HTTPException as _e:
+        if _e.status_code == 400:
+            return {"error": _e.detail}
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except Exception as _e:
@@ -123,6 +126,7 @@ async def find_users(
 @role_required(UserRole.MEMBER.value)
 async def update_self(
     data: UserUpdate,
+    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
@@ -146,19 +150,21 @@ async def delete(
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        if validate_role(token, UserRole.ADMIN.value):
-            await delete_user(id)
-            return {"message": "User deleted successfully by admin"}
+        if id:
+            if await validate_role(token, UserRole.ADMIN.value):
+                await delete_user(id)
+                return {"message": "User deleted successfully by admin"}
 
-        if validate_role(token, UserRole.MEMBER.value):
+        if await validate_role(token, UserRole.MEMBER.value):
             await delete_user(user_id=current_user.id)
             return {"message": "Your account has been deleted successfully"}
 
+        return {"message": "No action was taken"}
     except DeleteAdmin as ex:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=ex.message
         )
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
-    # except Exception as _e:
-    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as _e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)

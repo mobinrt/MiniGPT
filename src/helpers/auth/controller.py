@@ -51,7 +51,7 @@ class AuthController:
 
         user = await UserModel.get_or_none(id=user_id)
         if not user:
-            raise NotFoundError("User not found")
+            raise NotFoundError()
         return user
 
     async def get_role_from_token(
