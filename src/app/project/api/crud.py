@@ -2,15 +2,15 @@ from fastapi import HTTPException, status, Depends, Query, Request
 
 from . import router
 
-from src.app.project.schema import ProjectDisplay, ProjectCreate, ProjectUpdate
+from src.app.project.schema import ProjectCreate, ProjectUpdate
 from src.app.project.controller import ProjectController, get_project_controller
 from src.helpers.auth.dependencies import get_current_user
 from src.app.user.model import UserModel
 from src.app.project.model import ProjectModel
 
+from src.helpers.schema import ProjectResponseScheme
 from src.helpers.exceptions.entities import NotFoundError
 from src.helpers.exceptions.base_exception import BaseError
-from src.helpers.auth import oauth2_scheme
 from src.helpers.filter import Filter
 from src.helpers.pagination import Paginator, paginate_decorator
 from src.helpers.order_by import OrderBy
@@ -26,26 +26,19 @@ ProjectFilterSchema = create_filter_schema(
 
 @router.post(
     "/create",
-    response_model=ProjectDisplay,
+    response_model=ProjectResponseScheme,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_400_BAD_REQUEST: {"description": "Invalid data"}},
 )
 async def create_project(
     data: ProjectCreate,
-    token: str = Depends(oauth2_scheme),
     controller: ProjectController = Depends(get_project_controller),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        project = await controller.create(owner=current_user, **data.model_dump())
-        return ProjectDisplay(
-            id=project.id,
-            name=project.name,
-            description=project.description,
-            owner_id=project.owner.id,
-            created_at=project.created_at,
-            updated_at=project.updated_at,
-        )
+        project = await controller.create(owner = current_user, **data.model_dump())
+        return await ProjectResponseScheme.from_tortoise_orm(project)
+    
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)
     except Exception as _e:
@@ -64,7 +57,6 @@ async def find_projects(
     paginator: Paginator = Depends(),
     sort_by: list[str] = Query([]),
     select: list[str] = Query([]),
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
@@ -94,11 +86,11 @@ async def find_projects(
 
 @router.get(
     "/{id}",
-    response_model=ProjectDisplay,
+    response_model=ProjectResponseScheme,
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_404_NOT_FOUND: {"description": "Project not found"}},
 )
-async def find_project_by_id(
+async def find_project(
     id: int,
     current_user: UserModel = Depends(get_current_user),
     controller: ProjectController = Depends(get_project_controller),
@@ -110,7 +102,7 @@ async def find_project_by_id(
         if current_user != project_owner and not current_user.is_admin:
             raise BaseError("Project not found")
 
-        return ProjectDisplay.model_validate(project)
+        return await ProjectResponseScheme.from_tortoise_orm(project)
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except Exception as _e:
@@ -119,7 +111,7 @@ async def find_project_by_id(
 
 @router.put(
     "/{id}/",
-    response_model=ProjectDisplay,
+    response_model=ProjectResponseScheme,
     status_code=status.HTTP_200_OK,
 )
 async def update_project(
@@ -137,7 +129,8 @@ async def update_project(
 
         dict_data = data.model_dump()
         updated_project = await controller.update(id, dict_data)
-        return ProjectDisplay.model_validate(updated_project)
+        
+        return await ProjectResponseScheme.from_tortoise_orm(updated_project)
 
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
@@ -155,7 +148,6 @@ async def update_project(
 async def delete_project(
     id: int,
     current_user: UserModel = Depends(get_current_user),
-    token: str = Depends(oauth2_scheme),
     controller: ProjectController = Depends(get_project_controller),
 ):
     try:
@@ -166,7 +158,7 @@ async def delete_project(
             raise BaseError("Project not found")
 
         await controller.delete(project)
-        return {"message": "Your project has been deleted successfully"}
+        return {"message": "Selected project has been deleted successfully"}
 
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

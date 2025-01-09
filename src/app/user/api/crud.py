@@ -14,7 +14,7 @@ from src.app.user.model import UserModel
 
 from src.helpers.auth.rbac import role_required
 from src.helpers.auth.dependencies import get_current_user
-from src.helpers.auth.controller import oauth2_scheme
+from src.helpers.auth import oauth2_scheme
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.exceptions.entities import DeleteAdmin
 
@@ -126,7 +126,6 @@ async def find_users(
 @role_required(UserRole.MEMBER.value)
 async def update_self(
     data: UserUpdate,
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
@@ -146,7 +145,6 @@ async def update_self(
 )
 async def delete(
     id: Optional[int] = None,
-    token: str = Depends(oauth2_scheme),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:

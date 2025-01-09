@@ -1,10 +1,8 @@
 from functools import wraps
-from fastapi import HTTPException, status, Depends
+from fastapi import HTTPException, status
 
-from src.helpers.auth import oauth2_scheme
 from src.helpers.auth.controller import AuthController
 from src.helpers.exceptions.auth_exceptions import AccessDenied
-from src.app.user.model import UserModel
 
 
 def role_required(required_role: str):
