@@ -57,7 +57,7 @@ async def create(data: UserCreate):
     responses={status.HTTP_404_NOT_FOUND: {"description": "User not found"}},
 )
 @role_required(UserRole.ADMIN.value)
-async def find_user(
+async def read(
     id: Optional[int] = None,
     email: Optional[str] = None,
     token: str = Depends(oauth2_scheme),
@@ -80,13 +80,13 @@ async def find_user(
 
 
 @router.get(
-    "/all",
+    "/all/",
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found any user"}},
 )
 @role_required(UserRole.ADMIN.value)
 @paginate_decorator
-async def find_users(
+async def read_all(
     request: Request,
     filters: UserFilterSchema = Depends(),  # type: ignore
     paginator: Paginator = Depends(),

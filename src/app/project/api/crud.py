@@ -25,12 +25,12 @@ ProjectFilterSchema = create_filter_schema(
 
 
 @router.post(
-    "/create",
+    "/",
     response_model=ProjectResponseScheme,
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_400_BAD_REQUEST: {"description": "Invalid data"}},
 )
-async def create_project(
+async def create(
     data: ProjectCreate,
     controller: ProjectController = Depends(get_project_controller),
     current_user: UserModel = Depends(get_current_user),
@@ -46,12 +46,12 @@ async def create_project(
 
 
 @router.get(
-    "/",
+    "/all/",
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_404_NOT_FOUND: {"description": "Not found any project"}},
 )
 @paginate_decorator
-async def find_projects(
+async def read_all(
     request: Request,
     filters: ProjectFilterSchema = Depends(),  # type: ignore
     paginator: Paginator = Depends(),
@@ -80,17 +80,17 @@ async def find_projects(
             return {"error": _e.detail}
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
-    except Exception as _e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # except Exception as _e:
+    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @router.get(
-    "/{id}",
+    "/{id}/",
     response_model=ProjectResponseScheme,
     status_code=status.HTTP_200_OK,
     responses={status.HTTP_404_NOT_FOUND: {"description": "Project not found"}},
 )
-async def find_project(
+async def read(
     id: int,
     current_user: UserModel = Depends(get_current_user),
     controller: ProjectController = Depends(get_project_controller),
@@ -114,7 +114,7 @@ async def find_project(
     response_model=ProjectResponseScheme,
     status_code=status.HTTP_200_OK,
 )
-async def update_project(
+async def update(
     id: int,
     data: ProjectUpdate,
     controller: ProjectController = Depends(get_project_controller),
@@ -145,7 +145,7 @@ async def update_project(
     response_model=dict,
     status_code=status.HTTP_200_OK,
 )
-async def delete_project(
+async def delete(
     id: int,
     current_user: UserModel = Depends(get_current_user),
     controller: ProjectController = Depends(get_project_controller),

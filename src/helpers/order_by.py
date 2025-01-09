@@ -8,7 +8,7 @@ class OrderBy:
         self.data: List[str] = []
 
     def add(self, field: str):
-        self.data.add(field)
+        self.data.append(field)
 
     def apply(self, query: QuerySet):
         return query.order_by(*self.data)

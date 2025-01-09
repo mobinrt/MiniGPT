@@ -2,10 +2,9 @@ from fastapi import HTTPException, status, Depends, Request, Query
 from . import router
 
 
-from src.app.chat.schema import ChatCreate, ChatDisplay, ChatUpdate
+from src.app.chat.schema import ChatCreate, ChatUpdate
 from src.app.chat.controller import get_chat_controller, ChatController
 from src.app.user.model import UserModel
-from src.app.project.model import ProjectModel
 from src.app.chat.model import ChatModel
 
 from src.helpers.auth.dependencies import get_current_user
@@ -20,7 +19,7 @@ from src.helpers.filter_schema import create_filter_schema
 
 ChatFilterSchema = create_filter_schema(
     ChatModel,
-    excludes=["created_at", "updated_at"],
+    excludes=["created_at", "updated_at", "links_id", "sessions_id"],
     filter_operations=["contains", "exact"],
 )
 
@@ -57,7 +56,7 @@ async def create(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
 
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
 
     except Exception as _e:
         raise HTTPException(
@@ -87,7 +86,7 @@ async def read_all(
         query = OrderBy.create(query=ChatModel.all(), sort_by=sort_by)
 
         if not current_user.is_admin:
-            query = query.filter(owner=current_user)
+            query = query.filter(project__owner=current_user)
 
         filterd_query = Filter.create(query=query, filters=filters)
         paginated_data = await paginator.paginate(filterd_query)
@@ -104,7 +103,7 @@ async def read_all(
             return {"error": _e.detail}
     except BaseError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
-    except Exception as _e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -126,9 +125,9 @@ async def read(
         chat = await controller.permission_to_access_chat(id, current_user)
         return await ChatResponseScheme.from_tortoise_orm(chat)
     except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.detail)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -189,9 +188,9 @@ async def delete(
         return {"message": "Selected chat has been deleted successfully"}
 
     except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.detail)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
