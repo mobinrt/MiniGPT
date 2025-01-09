@@ -22,7 +22,7 @@ Tortoise.init_models(
     "models",
 )
 
-if TYPE_CHECKING:  
+if TYPE_CHECKING:
 
     class UserCreateScheme(UserModel, PydanticModel):  # type:ignore[misc]
         pass
@@ -95,7 +95,7 @@ else:
     )
     LinkResponseScheme = pydantic_model_creator(LinkModel, name="LinkResponseScheme")
     ChatResponseScheme = pydantic_model_creator(ChatModel, name="ChatResponseScheme")
-    
+
     PromptResponseScheme = pydantic_model_creator(
         PromptModel, name="PromptResponseScheme"
     )

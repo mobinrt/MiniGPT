@@ -23,7 +23,7 @@ async def get_active_project(
     try:
         project = await controller.get_by_id(id=int(active_project_id))
     except DoesNotExist as e:
-        print(f"Invalid project ID: {e}")
+        
         raise NotFoundError()
 
     return project

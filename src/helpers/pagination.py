@@ -1,7 +1,7 @@
 from functools import wraps
 from typing import Callable, Generic, List, TypeVar
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from pydantic import BaseModel
 from tortoise.queryset import QuerySet, ValuesQuery
 
@@ -102,17 +102,21 @@ class Paginator(BasePaginator):
         self.paginated_result = self.result[offset : offset + self.limit]
 
 
-def paginate(limit: int = 10, page: int = 1, paginator: BasePaginator = Paginator):
-    def decorator(func: Callable):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            page_value = kwargs.get("page", page)
-            limit_value = kwargs.get("limit", limit)
+def paginate_decorator(func: Callable):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        request: Request = kwargs.get("request")  
+        page = int(request.query_params.get("page", 1))
+        limit = int(request.query_params.get("limit", 10))
+        
+        paginator = kwargs.get("paginator")
+        if paginator:
+            paginator.page = page
+            paginator.limit = limit
+        else:
+            paginator = Paginator(limit=limit, page=page)
+        
+        kwargs["paginator"] = paginator  
 
-            result = await func(*args, **kwargs)
-
-            return await paginator(result, limit_value, page_value).paginate()
-
-        return wrapper
-
-    return decorator
+        return await func(*args, **kwargs)
+    return wrapper

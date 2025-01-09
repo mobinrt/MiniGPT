@@ -22,7 +22,7 @@ async def update_project(
 ):
     try:
         project = await controller.get_by_id(id)
-        print(project.name)
+        
         if not current_user.__eq__(project.owner):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -31,7 +31,6 @@ async def update_project(
 
         dict_data = data.model_dump()
         updated_project = await controller.update(id, dict_data)
-        print(updated_project)
         return ProjectDisplay.model_validate(updated_project)
     except NotFoundError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)

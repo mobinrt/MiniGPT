@@ -32,6 +32,7 @@ def create_filter_schema(
     includes: list[dict[str, tuple[type, Any]]] | None = None,
     filter_operations: list[str] | None = None,
 ) -> Type[BaseModel]:
+    excludes = excludes or[]
     fields = {  # Simple Fields
         f"{field_name}{op}": (
             Optional[get_python_type(field)],

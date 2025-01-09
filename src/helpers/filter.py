@@ -25,9 +25,12 @@ class Filter:
         exclude = exclude or []
         for field_with_op, value in filters.model_dump(exclude_none=True).items():
             try:
-                field, operator = (field_with_op.split("__") + [None])[:2]
-                if field in exclude:
-                    continue
+                if "__" in field_with_op:
+                    field, operator = field_with_op.split("__")
+                else:
+                    field, operator = field_with_op, None
+                    if field in exclude:
+                        continue
                 filter_obj._add(field, operator, value)
             except ValueError:
                 raise HTTPException(

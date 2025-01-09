@@ -28,7 +28,6 @@ async def login_for_access_token(
     try:
         token_data  =  await auth_usecase.get_token(data)
         headers = {"Authorization": f"Bearer {token_data.access_token}"}
-        print(headers)
         return JSONResponse(content=token_data.model_dump(), headers=headers)
     except InvalidCredentialsError:
         raise HTTPException(

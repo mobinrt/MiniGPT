@@ -9,6 +9,7 @@ from pydantic import (
     field_validator,
 )
 from typing import Optional
+from datetime import datetime
 
 
 class UserCreate(BaseModel):
@@ -31,7 +32,9 @@ class UserDisplay(BaseModel):
     email: EmailStr
     is_premium: bool
     image_url: Optional[HttpUrl] = None
-
+    created_at: datetime
+    updated_at: datetime
+ 
     model_config = {"from_attributes": True}
 
 
