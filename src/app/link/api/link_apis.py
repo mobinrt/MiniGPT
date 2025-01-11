@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
+from datetime import datetime
 
 from src.app.link.schema import LinkCreate
 from src.app.link.controller import get_link_controller, LinkController
@@ -36,7 +37,7 @@ LinkFilterSchema = create_filter_schema(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
-async def create_link(
+async def create(
     link_data: LinkCreate,
     request: Request,
     controller: LinkController = Depends(get_link_controller),
@@ -54,7 +55,7 @@ async def create_link(
 
 
 @router.get(
-    "/",
+    "/all/",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Link not found"},
@@ -62,7 +63,7 @@ async def create_link(
     },
 )
 @paginate_decorator
-async def read_all_links(
+async def read_all(
     request: Request,
     filters: LinkFilterSchema = Depends(),  # type: ignore
     paginator: Paginator = Depends(),
@@ -76,6 +77,8 @@ async def read_all_links(
 
         if not current_user.is_admin:
             query = query.filter(user=current_user)
+
+        query = query.filter(expired_at__gte=datetime.now())
 
         filtered_query = Filter.create(query=query, filters=filters)
         paginated_data = await paginator.paginate(filtered_query)
@@ -96,7 +99,7 @@ async def read_all_links(
 
 
 @router.get(
-    "/links/{id}/",
+    "/{id}/",
     response_model=LinkResponseScheme,
     status_code=status.HTTP_200_OK,
     responses={
@@ -104,7 +107,7 @@ async def read_all_links(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
-async def read_link(
+async def read(
     id: int,
     controller: LinkController = Depends(get_link_controller),
     current_user: UserModel = Depends(get_current_user),
@@ -112,9 +115,12 @@ async def read_link(
     try:
         link = await controller.get_by_id(id)
         link_owner = await link.user
-        # if link.is_expired
-        # if current_user != link_owner and not current_user.is_admin:
-        #     raise NotFoundError()
+
+        if link.is_expired:
+            raise NotFoundError("Link has expired.")
+
+        if current_user != link_owner and not current_user.is_admin:
+            raise NotFoundError()
 
         return await LinkResponseScheme.from_tortoise_orm(link)
     except NotFoundError as e:
@@ -128,17 +134,8 @@ async def read_link(
         )
 
 
-@router.put(
-    "/links/{id}/",
-    response_model=LinkResponseScheme,
-    status_code=status.HTTP_202_ACCEPTED,
-    responses={
-        status.HTTP_404_NOT_FOUND: {"description": "Link not found"},
-        status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
-    },
-)
 @router.delete(
-    "/links/{id}/",
+    "/{id}/",
     response_model=dict,
     status_code=status.HTTP_200_OK,
     responses={
@@ -146,22 +143,20 @@ async def read_link(
         status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal server error"},
     },
 )
-async def delete_link(
+async def delete(
     id: int,
     controller: LinkController = Depends(get_link_controller),
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        link = await controller.get_by_id_and_user(id, current_user)
+        link = await controller.get_by_id(id)
+        link_owner = await link.user
+
+        if current_user != link_owner and not current_user.is_admin:
+            raise NotFoundError()
+
         await controller.delete(link)
         return {"message": "Selected link has been deleted successfully"}
 
-    except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.detail)
     except BaseError as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred. Please try again later.",
-        )

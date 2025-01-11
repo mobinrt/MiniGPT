@@ -156,7 +156,7 @@ async def delete(
         project_owner = await project.owner
 
         if current_user != project_owner and not current_user.is_admin:
-            raise BaseError("Project not found")
+            raise NotFoundError()
 
         await controller.delete(project)
         return {"message": "Selected project has been deleted successfully"}
