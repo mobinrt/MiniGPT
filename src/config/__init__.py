@@ -1,6 +1,4 @@
 from .settings import settings
-from src.app.chat.model.chat_model import ChatModel
-from src.app.chat.model.message_model import MessageModel
 
 TORTOISE_ORM = {
     'connections': {'default': settings.database_url},

@@ -1,30 +1,36 @@
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
 from tortoise import Tortoise
-
-# from src.config.redis import redis_client
+import asyncio
 from src.config import TORTOISE_ORM
 
-async def lifespan(app: FastAPI):  
-    try:  
-        print("Initializing database...")  
-        await Tortoise.init(config=TORTOISE_ORM)  
-        await Tortoise.generate_schemas()  
-        
-        # await redis_client.ping()  
-        # print("Redis connection successful.")  
- 
-        yield  
+from src.app.link.task import app as clock_app
 
-    except Exception as e:  
-        print("Error during initialization:", e)  
-        raise e   
 
-    finally:   
-        # await redis_client.close()  
-        # print("Redis client connection closed.")  
-        await Tortoise.close_connections()  
-        print("Database connections closed.")
+async def lifespan(app: FastAPI):
+    try:
+        print("Initializing database...")
+        await Tortoise.init(config=TORTOISE_ORM)
+        await Tortoise.generate_schemas()
+        aio_clock_task = asyncio.create_task(clock_app.serve())
+
+        yield
+
+    except Exception as e:
+        print("Error during initialization:", e)
+        raise e
+
+    finally:
+        if aio_clock_task:
+            aio_clock_task.cancel()
+            
+            try:
+                await aio_clock_task
+            except asyncio.CancelledError:
+                print("AioClock task cancelled.")
+                
+        await Tortoise.close_connections()
+        print("Database connections closed.") 
 
 
 app = FastAPI(lifespan=lifespan)
