@@ -20,7 +20,6 @@ class UserModel(BaseModel):
         ],
         error_messages={"invalid": "Your email is invalid."},
     )
-    active_project_id = fields.IntField(null=True)
     password_hash = fields.CharField(max_length=200)
     is_admin = fields.BooleanField(default=False)
     is_premium = fields.BooleanField(default=False)

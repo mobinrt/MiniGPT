@@ -51,10 +51,12 @@ async def update_user(user_id: int, data: dict) -> UserModel:
             raise BaseError(
                 "Password should have at least 8 characters and less than 16"
             )
+        hashed_password = get_password_hash(temp_pass)
+        data["password_hash"] = hashed_password
 
-    hashed_password = get_password_hash(temp_pass)
-    data["password_hash"] = hashed_password
-    del data["password"]
+    else:
+        data["password_hash"] = temp_pass
+        del data["password"]
 
     user = await get_user_by_id(user_id)
 

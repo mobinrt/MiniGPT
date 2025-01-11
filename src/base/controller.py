@@ -36,6 +36,5 @@ class BaseController(Generic[TModel]):
         await instance.save()
         return instance
 
-    async def delete(self, id: int):
-        instance = await self.get_by_id(id)
+    async def delete(self, instance: TModel):
         await instance.delete()

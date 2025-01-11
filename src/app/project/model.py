@@ -11,7 +11,7 @@ class ProjectModel(BaseModel):
 
     name = fields.CharField(max_length=15)
     description = fields.CharField(max_length=100, null=True)
-
+    
     chats = fields.ReverseRelation["ChatModel"]
 
     class Meta:
