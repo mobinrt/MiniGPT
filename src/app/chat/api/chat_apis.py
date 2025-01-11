@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
 
 from src.app.chat.schema.chat_schema import ChatCreate, ChatUpdate
-from src.app.chat.controller import get_chat_controller, ChatController
+from src.app.chat.controller.chat_controller import get_chat_controller, ChatController
 from src.app.user.model import UserModel
 from src.app.chat.model import ChatModel
 

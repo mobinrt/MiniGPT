@@ -11,8 +11,6 @@ class ChatModel(BaseModel):
     title = fields.CharField(max_length=15)
     is_active = fields.BooleanField(default=False)
 
-
     class Meta:
         table = "chats"
         indexes = [("project",)]
-        
