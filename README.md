@@ -13,6 +13,7 @@ This project is a modern FastAPI-based web application that integrates AI langua
 3. **PostgreSQL**: Database for storing user data, prompts, and responses.
 4. **AIOClock**: Using for handling tasks with time interval
 5. Using custome library for pagination, filters, order_by, and etc
+6. **Rate limiting**
 
 
 ### **AI Integration**  
