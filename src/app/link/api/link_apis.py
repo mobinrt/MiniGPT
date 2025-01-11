@@ -160,3 +160,50 @@ async def delete(
 
     except BaseError as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+
+
+@router.get(
+    "/shared/{unique_id}/",
+    status_code=status.HTTP_200_OK,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Link not found"},
+        status.HTTP_400_BAD_REQUEST: {
+            "description": "Link has expired or is not public"
+        },
+    },
+)
+async def access_shared_link(
+    unique_id: str,
+    request: Request,
+    controller: LinkController = Depends(get_link_controller),
+):
+    try:
+        link = await controller.get_by_url(unique_id=unique_id)
+
+        if link.is_expired:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This link has expired.",
+            )
+
+        if not link.is_public:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This link is not public.",
+            )
+
+        user_agent = request.headers.get("user-agent", "Unknown")
+        ip_address = request.client.host
+        await controller.log_link_usage(link, user_agent, ip_address)
+
+        if link.project:
+            return {"type": "project", "data": await link.project.to_dict()}
+        elif link.chat:
+            return {"type": "chat", "data": await link.chat.to_dict()}
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No resource linked."
+        )
+
+    except BaseError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=e.message)

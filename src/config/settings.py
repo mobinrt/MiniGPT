@@ -20,6 +20,8 @@ class Settings:
     db_host: str = os.getenv("DB_HOST")
     db_port: int = int(os.getenv("DB_PORT"))
     db_name: str = os.getenv("DB_NAME")
+    #HF
+    api_key: str = os.getenv("HF_API_KEY")
     
     @property
     def database_url(self) -> str:

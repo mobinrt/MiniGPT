@@ -9,7 +9,7 @@ class ProjectModel(BaseModel):
         "models.UserModel", related_name="projects", on_delete=fields.CASCADE
     )
 
-    name = fields.CharField(max_length=15)
+    name = fields.CharField(max_length=15, null=True)
     description = fields.CharField(max_length=100, null=True)
     
     chats = fields.ReverseRelation["ChatModel"]

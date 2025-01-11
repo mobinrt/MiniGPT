@@ -7,7 +7,7 @@ from src.app.project.model import ProjectModel
 from src.app.link.model import LinkModel
 from src.app.chat.model import ChatModel
 from src.app.chat.model import PromptModel, ResponceModel
-from src.helpers.websocket.model import WebSocketSession
+from src.app.chat.model.websocket_model import WebSocketSession
 
 
 Tortoise.init_models(
@@ -17,7 +17,7 @@ Tortoise.init_models(
         "src.app.chat.model",
         "src.app.chat.model.message_model",
         "src.app.link.model",
-        "src.helpers.websocket.model",
+        "src.app.chat.model.websocket_model",
     ],
     "models",
 )

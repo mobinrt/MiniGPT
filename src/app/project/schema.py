@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class ProjectCreate(BaseModel):
-    name: str = Field(..., min_length=1, max_length=15)
+    name: Optional[str] = Field(max_length=15, default=None)
     description: Optional[str] = Field(max_length=100, default=None)
 
 

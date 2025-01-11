@@ -10,7 +10,7 @@ TORTOISE_ORM = {
                 'src.app.chat.model.chat_model',
                 'src.app.chat.model.message_model',
                 'src.app.link.model',
-                'src.helpers.websocket.model',
+                'src.app.chat.model.websocket_model',
                 'aerich.models' 
             ],
             'default_connection': 'default'
