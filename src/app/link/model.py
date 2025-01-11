@@ -31,7 +31,8 @@ class LinkModel(BaseModel):
 
     @property
     def is_expired(self) -> bool:
-        return datetime.now() > self.expired_at
+        expired_at_naive = self.expired_at.replace(tzinfo=None) 
+        return datetime.now() > expired_at_naive
 
     def generate_link_url(self, base_url: str) -> None:
         unique_id = uuid.uuid4().hex

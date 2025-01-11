@@ -1,10 +1,13 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
-from datetime import datetime
+from datetime import datetime, timedelta
+from tortoise.expressions import F
 
 from src.app.link.schema import LinkCreate
 from src.app.link.controller import get_link_controller, LinkController
 from src.app.user.model import UserModel
 from src.app.link.model import LinkModel
+from src.app.project.model import ProjectModel
+from src.app.chat.model import ChatModel
 
 from src.helpers.auth.dependencies import get_current_user
 from src.helpers.exceptions.base_exception import BaseError
@@ -45,13 +48,18 @@ async def create(
 ):
     try:
         base_url = str(request.base_url)[:-1]
+
+        await controller.permission_for_create_link(
+            link_data.project_id, link_data.chat_id, current_user
+        )
+
         new_link = await controller.create(user=current_user, **link_data.model_dump())
         new_link.generate_link_url(base_url)
         await new_link.save()
         return await LinkResponseScheme.from_tortoise_orm(new_link)
 
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
 
 
 @router.get(
@@ -78,7 +86,7 @@ async def read_all(
         if not current_user.is_admin:
             query = query.filter(user=current_user)
 
-        query = query.filter(expired_at__gte=datetime.now())
+        query = query.annotate(expired_at=F("created_at") + timedelta(hours=24))
 
         filtered_query = Filter.create(query=query, filters=filters)
         paginated_data = await paginator.paginate(filtered_query)
@@ -124,14 +132,14 @@ async def read(
 
         return await LinkResponseScheme.from_tortoise_orm(link)
     except NotFoundError as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.detail)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred. Please try again later.",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
+    # except Exception:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    #         detail="An unexpected error occurred. Please try again later.",
+    #     )
 
 
 @router.delete(
@@ -159,7 +167,7 @@ async def delete(
         return {"message": "Selected link has been deleted successfully"}
 
     except BaseError as ex:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.detail)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
 
 
 @router.get(

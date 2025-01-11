@@ -8,6 +8,7 @@ from src.helpers.exceptions.entities import NotFoundError
 from src.helpers.exceptions.auth_exceptions import AccessDenied
 from src.app.user.api.routers import user_router
 from src.app.project.api.routers import project_router
+from src.app.link.api.routers import link_router
 from src.app.chat.api.routers import chat_router, prompt_router, websocket_router
 from src.helpers.auth.auth_rout import router as auth_router
 
@@ -45,6 +46,7 @@ app.include_router(user_router)
 app.include_router(project_router)
 app.include_router(chat_router)
 app.include_router(prompt_router)
+app.include_router(link_router)
 app.include_router(websocket_router)
 app.include_router(auth_router)
 
