@@ -1,5 +1,5 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from tortoise.expressions import F
 
 from src.app.link.schema import LinkCreate
@@ -18,6 +18,9 @@ from src.helpers.pagination import Paginator, paginate_decorator
 from src.helpers.order_by import OrderBy
 from src.helpers.select import Select
 from src.helpers.filter_schema import create_filter_schema
+from src.helpers.auth.dependencies import get_auth_controller
+from src.helpers.auth.controller import AuthController
+
 
 router = APIRouter(
     prefix="/link",
@@ -80,6 +83,11 @@ async def read_all(
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
+        links_to_delete = await LinkModel.filter(
+        created_at__lt=datetime.now(timezone.utc) - timedelta(hours=24)
+        )
+        print(f"Links to delete: {links_to_delete}" )
+        
         query = OrderBy.create(query=LinkModel.all(), sort_by=sort_by)
         query = query.filter(user=current_user)
 
@@ -184,17 +192,31 @@ async def access_shared_link(
     unique_id: str,
     request: Request,
     controller: LinkController = Depends(get_link_controller),
+    auth_controller: AuthController = Depends(get_auth_controller),
 ):
     try:
         link = await controller.get_by_url(unique_id=unique_id)
 
+        token = request.headers.get("Authorization")
+
+        current_user = None
+        if token:
+            try:
+                current_user = auth_controller.get_current_user(token)
+
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authentication token.",
+                )
+                
         if link.is_expired:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This link has expired.",
             )
 
-        if not link.is_public:
+        if not link.is_public and (not current_user or link.user != current_user):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This link is not public.",

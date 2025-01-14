@@ -12,10 +12,8 @@ from tortoise.exceptions import DoesNotExist
 from huggingface_hub import InferenceClient
 from datetime import datetime
 
-from src.helpers.auth import oauth2_scheme
 from src.config.settings import Settings
 from src.helpers.enum.message_status import MessageStatus
-from src.app.user.model import UserModel
 from src.app.chat.model import ChatModel
 from src.app.chat.model import ResponceModel, PromptModel, WebSocketSession
 from src.helpers.auth.dependencies import get_current_user

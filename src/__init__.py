@@ -4,16 +4,26 @@ from tortoise import Tortoise
 import asyncio
 from src.config import TORTOISE_ORM
 
-from src.app.link.task import app as clock_app
+from src.app.link.task import app as clock_app, delete_expired_links
+
+
+async def start_clock():
+    print("Starting AioClock...")
+    await clock_app.serve()
 
 
 async def lifespan(app: FastAPI):
+    aio_clock_task = None
     try:
         print("Initializing database...")
         await Tortoise.init(config=TORTOISE_ORM)
         await Tortoise.generate_schemas()
-        aio_clock_task = asyncio.create_task(clock_app.serve())
 
+        print("Running delete_expired_links task immediately...")
+        await delete_expired_links()
+
+        aio_clock_task = asyncio.create_task(start_clock())
+        print("AIOClock is working")
         yield
 
     except Exception as e:
@@ -23,14 +33,14 @@ async def lifespan(app: FastAPI):
     finally:
         if aio_clock_task:
             aio_clock_task.cancel()
-            
+
             try:
                 await aio_clock_task
             except asyncio.CancelledError:
                 print("AioClock task cancelled.")
-                
+
         await Tortoise.close_connections()
-        print("Database connections closed.") 
+        print("Database connections closed.")
 
 
 app = FastAPI(lifespan=lifespan)
