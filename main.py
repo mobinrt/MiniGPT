@@ -37,6 +37,11 @@ async def general_exception(request: Request, exc: Exception):
     )
 
 
+@app.middleware("http")
+async def log_request(request: Request, call_next):
+    print(f"Request path: {request.url.path}")
+    return await call_next(request)
+
 @app.get("/")
 def start():
     return "this is my Mini GPT project!!"
