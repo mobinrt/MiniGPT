@@ -1,6 +1,8 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
 from datetime import datetime, timedelta, timezone
 from tortoise.expressions import F
+from uuid import UUID
+from typing import Optional
 
 from src.app.link.schema import LinkCreate
 from src.app.link.controller import get_link_controller, LinkController
@@ -12,7 +14,11 @@ from src.app.chat.model import ChatModel
 from src.helpers.auth.dependencies import get_current_user
 from src.helpers.exceptions.base_exception import BaseError
 from src.helpers.exceptions.entities import NotFoundError
-from src.helpers.schema import LinkResponseScheme
+from src.helpers.schema import (
+    LinkResponseScheme,
+    ProjectResponseScheme,
+    ChatResponseScheme,
+)
 from src.helpers.filter import Filter
 from src.helpers.pagination import Paginator, paginate_decorator
 from src.helpers.order_by import OrderBy
@@ -20,6 +26,7 @@ from src.helpers.select import Select
 from src.helpers.filter_schema import create_filter_schema
 from src.helpers.auth.dependencies import get_auth_controller
 from src.helpers.auth.controller import AuthController
+from src.helpers.auth import oauth2_scheme
 
 
 router = APIRouter(
@@ -83,11 +90,7 @@ async def read_all(
     current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        links_to_delete = await LinkModel.filter(
-        created_at__lt=datetime.now(timezone.utc) - timedelta(hours=24)
-        )
-        print(f"Links to delete: {links_to_delete}" )
-        
+        print(request.headers)
         query = OrderBy.create(query=LinkModel.all(), sort_by=sort_by)
         query = query.filter(user=current_user)
 
@@ -143,11 +146,11 @@ async def read(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=e.message)
     except BaseError as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.message)
-    # except Exception:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-    #         detail="An unexpected error occurred. Please try again later.",
-    #     )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred. Please try again later.",
+        )
 
 
 @router.delete(
@@ -179,7 +182,7 @@ async def delete(
 
 
 @router.get(
-    "/shared/{unique_id}/",
+    "/access/{url:path}/",
     status_code=status.HTTP_200_OK,
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Link not found"},
@@ -189,34 +192,25 @@ async def delete(
     },
 )
 async def access_shared_link(
-    unique_id: str,
+    url: str,
     request: Request,
     controller: LinkController = Depends(get_link_controller),
-    auth_controller: AuthController = Depends(get_auth_controller),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
-        link = await controller.get_by_url(unique_id=unique_id)
+        link = await controller.get_by_url(url=url)
 
-        token = request.headers.get("Authorization")
-
-        current_user = None
-        if token:
-            try:
-                current_user = auth_controller.get_current_user(token)
-
-            except Exception:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid authentication token.",
-                )
-                
         if link.is_expired:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This link has expired.",
             )
 
-        if not link.is_public and (not current_user or link.user != current_user):
+        link_owner = await link.user
+
+        if not link.is_public and (
+            current_user != link_owner and not current_user.is_admin
+        ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="This link is not public.",
@@ -226,10 +220,18 @@ async def access_shared_link(
         ip_address = request.client.host
         await controller.log_link_usage(link, user_agent, ip_address)
 
-        if link.project:
-            return {"type": "project", "data": await link.project.to_dict()}
-        elif link.chat:
-            return {"type": "chat", "data": await link.chat.to_dict()}
+        project = link.project
+        chat = link.chat
+        if project:
+            return {
+                "type": "project",
+                "data": await ProjectResponseScheme.from_tortoise_orm(project),
+            }
+        elif await chat:
+            return {
+                "type": "chat",
+                "data": await ChatResponseScheme.from_tortoise_orm(chat),
+            }
 
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="No resource linked."

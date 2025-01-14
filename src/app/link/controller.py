@@ -1,7 +1,7 @@
 from tortoise.exceptions import DoesNotExist
-import logging
 from datetime import datetime
 
+from src.config.log import logger
 from src.app.user.model import UserModel
 from src.app.link.model import LinkModel
 from src.helpers.exceptions.base_exception import BaseError
@@ -12,9 +12,9 @@ from src.app.chat.model import ChatModel
 
 
 class LinkController(BaseController[LinkModel]):
-    async def get_by_url(self, unique_id: str) -> LinkModel:
+    async def get_by_url(self, url: str) -> LinkModel:
         try:
-            return await LinkModel.get(link_url=unique_id).prefetch_related(
+            return await LinkModel.get(link_url=url).prefetch_related(
                 "project", "chat"
             )
         except DoesNotExist:
@@ -45,7 +45,7 @@ class LinkController(BaseController[LinkModel]):
             f"Resource Type: {'Project' if link.project else 'Chat'} | "
             f"Accessed By: {user} | IP: {ip_address} | Expired: {link.is_expired}"
         )
-        logging.info(log_message)
+        logger.info(log_message)
 
 
 def get_link_controller() -> BaseController:
