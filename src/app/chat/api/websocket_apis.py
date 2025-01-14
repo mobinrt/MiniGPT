@@ -8,7 +8,6 @@ from fastapi import (
     Query,
 )
 from tortoise.transactions import in_transaction
-from tortoise.exceptions import DoesNotExist
 from huggingface_hub import InferenceClient
 from datetime import datetime
 
@@ -17,7 +16,6 @@ from src.config.settings import Settings
 from src.helpers.enum.message_status import MessageStatus
 from src.app.chat.model import ChatModel
 from src.app.chat.model import ResponceModel, PromptModel, WebSocketSession
-from src.helpers.auth.dependencies import get_current_user
 from src.helpers.exceptions.entities import NotFoundError
 from src.helpers.exceptions.base_exception import BaseError
 
@@ -59,7 +57,7 @@ async def guest_websocket(websocket: WebSocket, guest_id: str = Query(...)):
     try:
         message_count_key = f"guest:{guest_id}:message_count"
         if not await redis_client.exists(message_count_key):
-            await redis_client.set(message_count_key, 0, ex=3600)  # Expires in 1 hour
+            await redis_client.set(message_count_key, 0, ex=3600)
 
         while True:
             data = await websocket.receive_json()
