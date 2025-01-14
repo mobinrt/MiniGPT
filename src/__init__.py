@@ -4,7 +4,7 @@ from tortoise import Tortoise
 import asyncio
 from src.config import TORTOISE_ORM
 
-from src.app.link.task import app as clock_app, delete_expired_links
+from src.config.aioclock import app as clock_app, delete_expired_links, delete_expired_websocket_sessions
 
 
 async def start_clock():
@@ -22,6 +22,9 @@ async def lifespan(app: FastAPI):
         print("Running delete_expired_links task immediately...")
         await delete_expired_links()
 
+        print("Running delete_expired_websocket_sessions task immediately...")
+        await delete_expired_websocket_sessions()
+        
         aio_clock_task = asyncio.create_task(start_clock())
         print("AIOClock is working")
         yield
