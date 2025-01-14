@@ -1,15 +1,11 @@
 from fastapi import HTTPException, status, Depends, Request, Query, APIRouter
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from tortoise.expressions import F
-from uuid import UUID
-from typing import Optional
 
 from src.app.link.schema import LinkCreate
 from src.app.link.controller import get_link_controller, LinkController
 from src.app.user.model import UserModel
 from src.app.link.model import LinkModel
-from src.app.project.model import ProjectModel
-from src.app.chat.model import ChatModel
 
 from src.helpers.auth.dependencies import get_current_user
 from src.helpers.exceptions.base_exception import BaseError
@@ -24,10 +20,6 @@ from src.helpers.pagination import Paginator, paginate_decorator
 from src.helpers.order_by import OrderBy
 from src.helpers.select import Select
 from src.helpers.filter_schema import create_filter_schema
-from src.helpers.auth.dependencies import get_auth_controller
-from src.helpers.auth.controller import AuthController
-from src.helpers.auth import oauth2_scheme
-
 
 router = APIRouter(
     prefix="/link",
